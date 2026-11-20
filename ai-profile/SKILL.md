@@ -1,6 +1,6 @@
 ---
 name: ai-profile
-description: 根据用户和 AI 的真实使用记录，生成 30 项“AI 能力画像”（统一样式的雷达图报告网页 + Markdown 原报告）。当用户说“做一份 AI 能力画像”“评估我用 AI 的能力”“ai-profile”“AI profile”时使用。
+description: 根据用户和 AI 的真实使用记录，生成 30 项“AI 能力画像”（统一样式的雷达图报告网页 + Markdown 原报告）。当用户说“做一份 AI 能力画像”“评估我用 AI 的能力”“ai-profile”时使用。Builds a 30-item AI capability profile from the user's real AI usage history (radar-chart report page + Markdown). Use when the user asks for an "AI profile" or to assess how well they use AI.
 ---
 
 # AI 能力画像（v0.7）
@@ -12,6 +12,8 @@ description: 根据用户和 AI 的真实使用记录，生成 30 项“AI 能�
 1. **完整阅读 `references/instructions.md`**，那里是全部评估规则：基本原则、证据分级、30 项定义和评分标准、AI 使用资历的分档、合并多份报告的方法。
 2. **按规则第一步到第四步执行**：先把记录找全（在用户电脑上运行时，查找这台电脑上所有 AI 工具的本机记录，包括已归档的），说明证据基础，统计使用数据，再逐项打分并写总结。
 3. **按下面“输出报告”一节生成报告**，这一节代替规则文件里的第七步。
+
+报告使用用户平时和你交流的语言（例如用户说英文就用英文写）。
 
 本机文件一律只读、只统计，不修改任何文件，不输出具体的项目名、目录名、文件名、人名和个人敏感信息。
 
