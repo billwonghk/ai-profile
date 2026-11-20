@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 能力画像</title>
+<style>
+/* Layout: toolbar → hero (score ring + plain-language summary) → strengths / priorities → overview radar → six domain cards → evidence & data → limitations. */
+:root{
+  color-scheme: light;
+  --bg:#f4f5f7; --surface:#ffffff; --surface-2:#f8f9fb;
+  --ink:#14171c; --ink-2:#4b525c; --ink-3:#7c838d; --line:#e3e6ea;
+  --accent:#2a78d6; --accent-soft:rgba(42,120,214,.14);
+  --s-top:#0a7d3e; --s-good:#0ca30c; --s-mid:#a3a8b0; --s-low:#ec835a; --s-bad:#d64545; --s-none:#c4c8ce;
+  --font:"PingFang SC","Noto Sans SC","Microsoft YaHei",-apple-system,system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#111214; --surface:#1a1b1e; --surface-2:#202226;
+    --ink:#f0efec; --ink-2:#c3c2b7; --ink-3:#8f8e86; --line:#2e3034;
+    --accent:#3987e5; --accent-soft:rgba(57,135,229,.22);
+    --s-mid:#6f737a; --s-none:#4a4d52;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#111214; --surface:#1a1b1e; --surface-2:#202226;
+  --ink:#f0efec; --ink-2:#c3c2b7; --ink-3:#8f8e86; --line:#2e3034;
+  --accent:#3987e5; --accent-soft:rgba(57,135,229,.22);
+  --s-mid:#6f737a; --s-none:#4a4d52;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.7}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 18px 64px;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{margin:0;line-height:1.35;text-wrap:balance}
+h1{font-size:28px;font-weight:700}
+h2{font-size:20px;font-weight:700}
+h3{font-size:16px;font-weight:700}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--ink-3)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px}
+/* toolbar */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.toolbar .brand{font-size:13px;color:var(--ink-3);letter-spacing:.02em}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+button,.filebtn{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 14px;border-radius:999px;cursor:pointer}
+button:hover,.filebtn:hover{border-color:var(--accent)}
+button:focus-visible,.filebtn:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.filebtn input{position:absolute;width:1px;height:1px;opacity:0}
+.filebtn{position:relative}
+#pastebox{display:none;flex-direction:column;gap:10px}
+#pastebox.open{display:flex}
+textarea{width:100%;min-height:180px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;background:var(--surface-2);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px}
+#msg{display:none;padding:10px 14px;border-radius:10px;border:1px solid var(--s-low);background:var(--surface);font-size:14px}
+#msg.show{display:block}
+.banner{font-size:13px;color:var(--ink-2);background:var(--surface-2);border:1px dashed var(--line);border-radius:10px;padding:8px 12px}
+/* hero */
+.hero{display:grid;grid-template-columns:200px 1fr;gap:28px;align-items:center}
+.ring{position:relative;width:180px;height:180px;margin:0 auto}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .track{stroke:var(--line);fill:none}
+.ring .val{stroke:var(--accent);fill:none;stroke-linecap:round}
+.ring .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .big{font-size:46px;font-weight:700;line-height:1}
+.ring .of{font-size:13px;color:var(--ink-3);margin-top:6px}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 14px}
+.pill{font-size:12.5px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:2px 10px}
+.summary p{margin:0 0 6px;max-width:66ch}
+.summary p:first-child{font-size:17px;font-weight:600;color:var(--ink)}
+.disclose{font-size:13px;color:var(--ink-2);border-left:3px solid var(--line);padding-left:12px;margin-top:12px;max-width:80ch}
+/* two lists */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.rank{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:12px}
+.rank li{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start}
+.rank .idx{width:24px;height:24px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line);font-size:12px;display:flex;align-items:center;justify-content:center;color:var(--ink-2)}
+.rank .t{font-weight:600}
+.rank .why{display:block;font-size:13.5px;color:var(--ink-2);font-weight:400}
+.rank .sc{font-weight:700;font-size:15px}
+/* overview */
+.overview{display:grid;grid-template-columns:340px 1fr;gap:28px;align-items:center}
+.dbars{display:flex;flex-direction:column;gap:12px}
+.drow{display:grid;grid-template-columns:7.5em 1fr 4.5em;gap:12px;align-items:center;font-size:14px}
+.drow a{color:var(--ink);text-decoration:none}
+.drow a:hover{color:var(--accent)}
+.bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:4px}
+/* chips */
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:1px 9px;border-radius:999px;border:1px solid var(--line);color:var(--ink-2);white-space:nowrap;background:var(--surface)}
+.chip::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c)}
+.c-top{--c:var(--s-top)} .c-good{--c:var(--s-good)} .c-mid{--c:var(--s-mid)} .c-low{--c:var(--s-low)} .c-bad{--c:var(--s-bad)} .c-none{--c:var(--s-none)}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+/* domain cards */
+.dhead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.dhead .avg{font-size:14px;color:var(--ink-2)}
+.domain{display:grid;grid-template-columns:280px 1fr;gap:26px}
+.items{display:flex;flex-direction:column}
+.item{padding:14px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:none;padding-top:0}
+.itop{display:grid;grid-template-columns:1fr 110px 2.2em auto;gap:12px;align-items:center}
+.iname{font-weight:600}
+.iname small{color:var(--ink-3);font-weight:400;margin-right:6px}
+.iscore{font-weight:700;text-align:right}
+.advice{font-size:13px;color:var(--ink-2);margin-top:4px}
+.advice b{color:var(--accent);font-weight:600}
+.srcs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.src{font-size:11.5px;color:var(--ink-3);border:1px solid var(--line);border-radius:6px;padding:0 6px}
+details{margin-top:6px;font-size:13.5px}
+summary{cursor:pointer;color:var(--ink-3);font-size:12.5px}
+summary:hover{color:var(--accent)}
+details p{margin:6px 0 0;color:var(--ink-2)}
+details p b{color:var(--ink);font-weight:600}
+/* data */
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--ink-3);font-weight:500;font-size:13px}
+.tablewrap{overflow-x:auto}
+ul.lim{margin:10px 0 0;padding-left:20px}
+ul.lim li{margin:6px 0;color:var(--ink-2)}
+.kv{display:grid;grid-template-columns:7em 1fr;gap:6px 14px;font-size:14px;margin-top:10px}
+.kv dt{color:var(--ink-3)} .kv dd{margin:0}
+.foot{text-align:center;font-size:12.5px;color:var(--ink-3);margin-top:8px}
+svg text{fill:var(--ink-2);font-family:var(--font)}
+.rg{fill:none;stroke:var(--line)} .ra{stroke:var(--line)}
+.rarea{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2;stroke-linejoin:round}
+.rpt{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+.rmiss{fill:var(--surface);stroke:var(--ink-3);stroke-dasharray:2 2}
+#tt{position:fixed;pointer-events:none;background:var(--ink);color:var(--surface);font-size:12.5px;padding:5px 9px;border-radius:6px;opacity:0;z-index:20;transition:opacity .1s}
+@media (max-width:820px){
+  .hero,.two,.overview,.domain{grid-template-columns:1fr}
+  .itop{grid-template-columns:1fr 70px 2em}
+  .itop .chip{grid-column:1/-1;justify-self:start}
+  .drow{grid-template-columns:6.5em 1fr 4em}
+}
+@media (prefers-reduced-motion:reduce){#tt{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="toolbar">
+    <span class="brand">AI 能力画像 · 报告查看器 v0.7</span>
+    <div class="btns">
+      <label class="filebtn" id="filelabel">上传报告文件<input type="file" id="file" accept=".md,.json,.txt,text/plain,application/json"></label>
+      <button type="button" id="pastebtn">粘贴报告</button>
+      <button type="button" id="samplebtn">查看示例</button>
+      <button type="button" class="primary" id="exportbtn">导出 Markdown</button>
+    </div>
+  </div>
+  <div id="exportbox" class="card" style="display:none;flex-direction:column;gap:10px">
+    <label for="exportarea" class="muted" style="font-size:13px">Markdown 原报告（含末尾数据块）。如果下载没有开始，点“复制全文”，粘贴到任意文本编辑器另存为 .md 文件。</label>
+    <textarea id="exportarea" readonly></textarea>
+    <div class="btns"><button type="button" class="primary" id="copybtn">复制全文</button><button type="button" id="closeexport">收起</button><span id="copymsg" class="muted" style="font-size:13px;align-self:center"></span></div>
+  </div>
+  <div id="pastebox" class="card">
+    <label for="pastearea" class="muted" style="font-size:13px">把 AI 输出的完整报告（Markdown，末尾带 json 数据块）粘贴到这里。数据只在你的浏览器里处理，不会上传。</label>
+    <textarea id="pastearea" placeholder="粘贴报告全文……"></textarea>
+    <div><button type="button" class="primary" id="renderbtn">生成报告</button></div>
+  </div>
+  <div id="msg" role="alert"></div>
+  <div id="report"></div>
+</div>
+<div id="tt" role="tooltip"></div>
+<script>
+const EMBEDDED = /*__DATA__*/null;
+const SAMPLE = {"version": "0.7", "longest_usage_months": 9, "title": "AI 能力画像（示例）", "date": "2026-11-20", "tool": "示例 AI", "timezone": "Asia/Singapore", "summary": ["这是一份示例报告，人物和数据都是虚构的。", "示例用户擅长把复杂任务拆成清楚的步骤，也会核查 AI 的输出。", "短板在于开了不少项目，部分停在半路。", "最值得先做的一件事：挑一个项目做到能给别人用。"], "influence": "三份原报告都没有发现“多鼓励我”这类设置。合并者是平时和你合作的 Claude，参与过这份评估指令的设计；你的偏好设置也会让 AI 平时少唱反调，所以有偏宽的风险。按 v0.7 规则：“收敛聚焦”和“交付完成度”合并为“成型与收敛”，以做到成型为标准；“价值实现”和“外部反馈回路”合并为“价值与反馈”，权重减半；新增“复盘与沉淀”“AI 使用资历”“优先级管理”；只评能力，情绪化表达不计分。", "items": [{"no": 1, "score": 7, "grade": "A", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 2, "score": 8, "grade": "A", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 3, "score": 6, "grade": "B", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 4, "score": 7, "grade": "A", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 5, "score": 6, "grade": "A", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 6, "score": 8, "grade": "B", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 7, "score": 7, "grade": "A", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 8, "score": 6, "grade": "A", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 9, "score": 8, "grade": "B", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 10, "score": 6, "grade": "A", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 11, "score": 7, "grade": "A", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 12, "score": 8, "grade": "B", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 13, "score": 6, "grade": "A", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 14, "score": 7, "grade": "A", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 15, "score": 6, "grade": "B", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 16, "score": 8, "grade": "A", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 17, "score": 7, "grade": "A", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 18, "score": 7, "grade": "B", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 19, "score": 6, "grade": "A", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 20, "score": null, "grade": "A", "support": "证据不足：记录里没有足够的相关内容（示例数据）。", "counter": "", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。", "weight": 0.5}, {"no": 21, "score": 8, "grade": "B", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 22, "score": 7, "grade": "A", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 23, "score": 7, "grade": "A", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 24, "score": 6, "grade": "B", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 25, "score": 5, "grade": "A", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 26, "score": 7, "grade": "A", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 27, "score": 6, "grade": "B", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 28, "score": 6, "grade": "A", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 29, "score": 6, "grade": "A", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}, {"no": 30, "score": 7, "grade": "B", "support": "示例证据：在多个月份的对话中反复出现相关行为（示例数据）。", "counter": "示例：也有几次相反的表现（示例数据）。", "advice": "示例建议：把这一项的做法写成固定清单，每次照着做。"}], "strengths": [{"no": 2, "reason": "示例理由。"}, {"no": 6, "reason": "示例理由。"}, {"no": 8, "reason": "示例理由。"}, {"no": 12, "reason": "示例理由。"}, {"no": 16, "reason": "示例理由。"}, {"no": 21, "reason": "示例理由。"}], "priorities": [{"no": 9, "reason": "示例理由。"}, {"no": 20, "reason": "示例理由。", "need_evidence": true}, {"no": 25, "reason": "示例理由。"}, {"no": 13, "reason": "示例理由。"}, {"no": 15, "reason": "示例理由。"}], "evidence_basis": {"sources": [{"name": "示例：本机会话日志", "where": "本机", "grade": "A", "status": "示例：120 个会话"}], "range": "示例：2026-01 至 2026-11", "sampling": "示例：抽读 20 段", "coverage": "中", "coverage_reason": "示例说明"}, "usage": [{"label": "对话数量", "value": "示例：120 个", "confidence": "高"}], "limitations": ["这是示例数据，不代表任何真实用户。"]};
+
+const DOMAINS = ["认知与判断","学习与执行","AI 驾驭力","业务与价值","沟通与协作","自我管理"];
+/* v0.6: 28 items. [name, domainIndex, weight] */
+const ITEMS = [
+ ["趋势判断",0,1],["问题拆解",0,1],["跨领域联想",0,1],["批判性验证",0,1],["自我纠错",0,1],
+ ["学习速度",1,1],["投入强度",1,1],["AI 使用资历",1,1],["动手构建",1,1],["成型与收敛",1,1],
+ ["工具广度",2,1],["指令表达",2,1],["多工具编排",2,1],["质量把关",2,1],["转化为真实产出",2,1],
+ ["领域知识表现",3,1],["需求洞察",3,1],["产品与方案思维",3,1],["成本与收益意识",3,1],["价值与反馈",3,0.5],
+ ["书面表达",4,1],["结构化说明",4,1],["反馈质量",4,1],["对不同意见的态度",4,1],["多语言使用",4,1],
+ ["受阻后的推进方式",5,1],["复盘与沉淀",5,1],["优先级管理",5,1],["使用节奏",5,1],["风险意识",5,1]
+];
+const N_ITEMS = ITEMS.length;
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const f1 = n => (Math.round(n*10)/10).toFixed(1);
+const isNum = v => typeof v === "number" && isFinite(v);
+
+function label(item){
+  if (item.status === "na") return ["不适用","c-none"];
+  if (!isNum(item.score)) return ["证据不足","c-none"];
+  const s = item.score;
+  if (s >= 9) return ["突出","c-top"];
+  if (s >= 7) return ["强项","c-good"];
+  if (s >= 5) return ["中等","c-mid"];
+  if (s >= 3) return ["待补","c-low"];
+  return ["明显缺失","c-bad"];
+}
+
+function extractJSON(text){
+  const fences = [...text.matchAll(/```(?:json)?\s*([\s\S]*?)```/gi)].map(m => m[1]);
+  const cands = fences.length ? fences.reverse() : [];
+  cands.push(text);
+  for (const c of cands){
+    const t = c.trim();
+    const start = t.indexOf("{"), end = t.lastIndexOf("}");
+    if (start < 0 || end <= start) continue;
+    try { const o = JSON.parse(t.slice(start, end+1)); if (o && Array.isArray(o.items)) return o; } catch(e){}
+  }
+  return null;
+}
+
+function normalize(d){
+  const items = [];
+  for (let i = 1; i <= N_ITEMS; i++){
+    const src = d.items.find(x => Number(x.no) === i) || {};
+    const score = isNum(src.score) ? Math.max(0, Math.min(10, src.score)) : null;
+    const def = ITEMS[i-1];
+    items.push({
+      no:i, di: def[1], domain: DOMAINS[def[1]], name: def[0], weight: isNum(src.weight) ? src.weight : def[2],
+      score, status: src.status === "na" ? "na" : (score === null ? "insufficient" : "scored"),
+      grade: src.grade || "", support: src.support || "", counter: src.counter || "", advice: src.advice || "",
+      sources: src.sources && typeof src.sources === "object" ? src.sources : null, note: src.note || ""
+    });
+  }
+  return {...d, items};
+}
+
+/* ---------- tooltip ---------- */
+const tt = document.getElementById("tt");
+function tip(e, html){ tt.innerHTML = html; tt.style.opacity = 1; move(e); }
+function move(e){ const w = tt.offsetWidth, h = tt.offsetHeight; tt.style.left = Math.min(e.clientX + 12, innerWidth - w - 8) + "px"; tt.style.top = Math.min(e.clientY + 12, innerHeight - h - 8) + "px"; }
+function untip(){ tt.style.opacity = 0; }
+
+/* ---------- radar ---------- */
+function radar(labels, values, size, aria){
+  const n = labels.length, pad = 76, r = size/2 - pad, cx = size/2, cy = size/2;
+  const ang = i => -Math.PI/2 + i*2*Math.PI/n;
+  const pt = (i, v) => [cx + Math.cos(ang(i))*r*v/10, cy + Math.sin(ang(i))*r*v/10];
+  let h = "";
+  [2,4,6,8,10].forEach(k => { h += `<polygon class="rg" points="${labels.map((_,i)=>pt(i,k).map(x=>x.toFixed(1)).join(",")).join(" ")}"/>`; });
+  labels.forEach((_,i) => { const [x,y] = pt(i,10); h += `<line class="ra" x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`; });
+  h += `<text x="${cx+4}" y="${(cy - r + 12).toFixed(1)}" font-size="10" style="fill:var(--ink-3)">10</text>`;
+  h += `<text x="${cx+4}" y="${(cy - r/2 + 12).toFixed(1)}" font-size="10" style="fill:var(--ink-3)">5</text>`;
+  const scored = values.map((v,i)=>[v,i]).filter(([v]) => isNum(v));
+  if (scored.length >= 3) h += `<polygon class="rarea" points="${scored.map(([v,i])=>pt(i,v).map(x=>x.toFixed(1)).join(",")).join(" ")}"/>`;
+  labels.forEach((lab,i) => {
+    const [lx,ly] = pt(i, 12.6); const c = Math.cos(ang(i));
+    const anchor = Math.abs(c) < .25 ? "middle" : (c > 0 ? "start" : "end");
+    const v = values[i]; const vs = isNum(v) ? f1(v).replace(/\.0$/,"") : "—";
+    const lines = lab.length > 6 ? [lab.slice(0, Math.ceil(lab.length/2)), lab.slice(Math.ceil(lab.length/2))] : [lab];
+    const y0 = ly - (lines.length - 1) * 8 + 4;
+    h += `<text x="${lx.toFixed(1)}" y="${y0.toFixed(1)}" text-anchor="${anchor}" font-size="12.5">` +
+      lines.map((t,j)=>`<tspan x="${lx.toFixed(1)}" dy="${j?15:0}">${esc(t)}${j===lines.length-1?` <tspan style="font-weight:700;fill:var(--ink)">${vs}</tspan>`:""}</tspan>`).join("") + `</text>`;
+  });
+  labels.forEach((lab,i) => {
+    const v = values[i];
+    if (isNum(v)){ const [x,y] = pt(i,v); h += `<circle class="rhit" data-l="${esc(lab)}" data-v="${f1(v)}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="13" fill="transparent" tabindex="0"/><circle class="rpt" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5"/>`; }
+    else { const [x,y] = pt(i,0.6); h += `<circle class="rmiss" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4"/>`; }
+  });
+  return `<svg viewBox="0 0 ${size} ${size}" width="100%" style="max-width:${size}px;display:block;margin:0 auto;overflow:visible" role="img" aria-label="${esc(aria)}">${h}</svg>`;
+}
+
+function wireRadars(root){
+  root.querySelectorAll(".rhit").forEach(c => {
+    const html = `<b>${c.dataset.l}</b> · ${c.dataset.v} / 10`;
+    c.addEventListener("mouseenter", e => tip(e, html));
+    c.addEventListener("mousemove", move);
+    c.addEventListener("mouseleave", untip);
+    c.addEventListener("focus", () => { const b = c.getBoundingClientRect(); tip({clientX:b.right, clientY:b.top}, html); });
+    c.addEventListener("blur", untip);
+  });
+}
+
+/* ---------- render ---------- */
+function render(raw, opts = {}){
+  CURRENT = raw;
+  const d = normalize(raw);
+  const items = d.items;
+  const scored = items.filter(x => isNum(x.score));
+  const wavg = arr => { const w = arr.reduce((a,b)=>a+b.weight,0); return w ? arr.reduce((a,b)=>a+b.score*b.weight,0)/w : null; };
+  const avg = scored.length ? wavg(scored) : null;
+  const dstats = DOMAINS.map((name, di) => {
+    const its = items.filter(x => x.di === di); const sc = its.filter(x => isNum(x.score));
+    return {name, its, total: its.length, n: sc.length, avg: sc.length >= 3 ? wavg(sc) : null};
+  });
+  const months = isNum(d.longest_usage_months) ? d.longest_usage_months : null;
+  const meta = [d.date && `评估日期 ${d.date}`, d.tool && `评估工具 ${d.tool}`, d.timezone && `时区 ${d.timezone}`, months !== null && `单一工具最长使用 ${months} 个月（可见记录）`, `已打分 ${scored.length} / ${N_ITEMS} 项`, d.merged_from && d.merged_from.length && `合并自 ${d.merged_from.length} 份报告`].filter(Boolean);
+  const C = 2*Math.PI*80, frac = avg ? avg/10 : 0;
+
+  const byNo = no => items[no-1];
+  const strengths = (Array.isArray(d.strengths) && d.strengths.length ? d.strengths : [...scored].sort((a,b)=>b.score-a.score).slice(0,5).map(x=>({no:x.no, reason:x.support})))
+    .map((s,i) => { const it = byNo(Number(s.no)); return it ? `<li><span class="idx">${i+1}</span><span><span class="t">${esc(it.name)}</span><span class="why">${esc(s.reason || "")}</span></span><span class="sc num">${isNum(it.score)?it.score:"—"}</span></li>` : ""; }).join("");
+  const prios = (Array.isArray(d.priorities) ? d.priorities : []).map((p,i) => { const it = byNo(Number(p.no)); if (!it) return ""; const [lb] = label(it);
+    return `<li><span class="idx">${i+1}</span><span><span class="t">${esc(it.name)}</span>${p.need_evidence?` <span class="chip c-none">先补证据</span>`:""}<span class="why">${esc(p.reason || "")}</span></span><span class="sc num">${isNum(it.score)?it.score:lb}</span></li>`; }).join("");
+
+  const summary = (Array.isArray(d.summary) ? d.summary : [d.summary]).filter(Boolean).map(s => `<p>${esc(s)}</p>`).join("");
+
+  let html = "";
+  if (opts.banner) html += `<div class="banner">${opts.banner}</div>`;
+  if (months !== null && months < 6) html += `<div class="banner" style="border-color:var(--s-low)"><b>使用时长不足半年：</b>在任何一个 AI 工具上的使用都不到 6 个月，这份评估的参考意义有限。</div>`;
+  html += `<section class="card hero" aria-label="总评">
+    <div class="ring" aria-label="平均分 ${avg?f1(avg):"—"}"><svg viewBox="0 0 180 180"><circle class="track" cx="90" cy="90" r="80" stroke-width="12"/><circle class="val" cx="90" cy="90" r="80" stroke-width="12" stroke-dasharray="${(C*frac).toFixed(1)} ${C.toFixed(1)}"/></svg>
+      <div class="center"><span class="big num">${avg?f1(avg):"—"}</span><span class="of">加权平均 / 10</span></div></div>
+    <div><h1>${esc(d.title || "AI 能力画像")}</h1><div class="meta">${meta.map(m=>`<span class="pill">${esc(m)}</span>`).join("")}</div>
+      <div class="summary">${summary}</div>
+      ${d.influence ? `<div class="disclose"><b>影响评价的因素：</b>${esc(d.influence)}</div>` : ""}
+      <div class="legend"><span class="chip c-top">突出 9–10</span><span class="chip c-good">强项 7–8</span><span class="chip c-mid">中等 5–6</span><span class="chip c-low">待补 3–4</span><span class="chip c-bad">明显缺失 1–2</span><span class="chip c-none">证据不足 / 不适用</span></div>
+    </div></section>`;
+
+  html += `<div class="two"><section class="card"><h2>最强的地方</h2><ol class="rank">${strengths}</ol></section>
+    <section class="card"><h2>最该补的五项</h2><p class="muted" style="margin:4px 0 0;font-size:13px">按撬动力排序，不按分数高低</p><ol class="rank">${prios || `<li class="muted">报告里没有给出。</li>`}</ol></section></div>`;
+
+  html += `<section class="card overview" aria-label="六个领域"><div>${radar(DOMAINS, dstats.map(s=>s.avg), 360, "六个领域平均分雷达图")}</div>
+    <div><h2>六个领域</h2><p class="muted" style="margin:4px 0 14px;font-size:13px">领域分 = 已打分项的加权平均；少于 3 项打分时标“覆盖不足”</p>
+    <div class="dbars">${dstats.map((s,i)=>`<div class="drow"><a href="#d${i+1}">${esc(s.name)}</a><div class="bar"><i style="width:${s.avg?s.avg*10:0}%"></i></div><span class="num" style="text-align:right">${s.avg?f1(s.avg):"覆盖不足"}</span></div>`).join("")}</div></div></section>`;
+
+  dstats.forEach((s, di) => {
+    html += `<section class="card" id="d${di+1}" aria-label="${esc(s.name)}"><div class="dhead"><h2>${esc(s.name)}</h2><span class="avg num">${s.avg?`领域平均 ${f1(s.avg)}`:"覆盖不足"} · 已打分 ${s.n}/${s.total}</span></div>
+      <div class="domain"><div>${radar(s.its.map(x=>x.name), s.its.map(x=>x.score), 300, s.name + "雷达图")}</div><div class="items">` +
+      s.its.map(it => { const [lb, cls] = label(it);
+        const srcs = it.sources ? `<div class="srcs">${Object.entries(it.sources).map(([k,v])=>`<span class="src">${esc(k)} ${isNum(v)?v:(v?esc(v):"—")}</span>`).join("")}</div>` : "";
+        return `<div class="item"><div class="itop"><span class="iname"><small class="num">${it.no}</small>${esc(it.name)}${it.weight < 1 ? ` <span class="src">低权重</span>` : ""}</span><div class="bar"><i style="width:${isNum(it.score)?it.score*10:0}%"></i></div><span class="iscore num">${isNum(it.score)?it.score:"—"}</span><span class="chip ${cls}">${lb}</span></div>
+          ${it.advice?`<div class="advice"><b>建议</b> ${esc(it.advice)}</div>`:""}${srcs}
+          <details><summary>查看证据${it.grade?`（${esc(it.grade)} 级）`:""}</summary>${it.support?`<p><b>支持：</b>${esc(it.support)}</p>`:""}${it.counter?`<p><b>反面 / 边界：</b>${esc(it.counter)}</p>`:""}${it.note?`<p><b>说明：</b>${esc(it.note)}</p>`:""}</details></div>`; }).join("") +
+      `</div></div></section>`;
+  });
+
+  const eb = d.evidence_basis || {};
+  if (eb.sources || eb.range || eb.sampling){
+    html += `<section class="card"><h2>证据基础</h2>`;
+    if (Array.isArray(eb.sources) && eb.sources.length) html += `<div class="tablewrap" style="margin-top:12px"><table><tr><th>数据来源</th><th>位置</th><th>等级</th><th>情况</th></tr>${eb.sources.map(s=>`<tr><td>${esc(s.name)}</td><td>${esc(s.where||"")}</td><td>${esc(s.grade||"—")}</td><td>${esc(s.status||"")}</td></tr>`).join("")}</table></div>`;
+    html += `<dl class="kv">${eb.range?`<dt>时间范围</dt><dd>${esc(eb.range)}</dd>`:""}${eb.sampling?`<dt>抽样阅读</dt><dd>${esc(eb.sampling)}</dd>`:""}${eb.coverage?`<dt>覆盖程度</dt><dd>${esc(eb.coverage)}${eb.coverage_reason?`：${esc(eb.coverage_reason)}`:""}</dd>`:""}</dl></section>`;
+  }
+  if (Array.isArray(d.usage) && d.usage.length){
+    html += `<section class="card"><h2>使用数据</h2><div class="tablewrap" style="margin-top:12px"><table><tr><th>项目</th><th>数据</th><th>把握</th></tr>${d.usage.map(u=>`<tr><td>${esc(u.label)}</td><td>${esc(u.value)}</td><td>${esc(u.confidence||"")}</td></tr>`).join("")}</table></div>`;
+    if (Array.isArray(d.task_types) && d.task_types.length) html += `<h3 style="margin-top:18px">任务类型分布</h3><div class="tablewrap"><table><tr><th>来源</th><th>分布</th></tr>${d.task_types.map(t=>`<tr><td>${esc(t.source||"")}</td><td>${esc(t.distribution||"")}</td></tr>`).join("")}</table></div>`;
+    html += `</section>`;
+  }
+  if (Array.isArray(d.merged_from) && d.merged_from.length){
+    html += `<section class="card"><h2>合并来源</h2><div class="tablewrap" style="margin-top:12px"><table><tr><th>报告</th><th>覆盖范围</th><th>说明</th></tr>${d.merged_from.map(m=>`<tr><td>${esc(m.tool)}</td><td>${esc(m.range||"")}</td><td>${esc(m.note||"")}</td></tr>`).join("")}</table></div></section>`;
+  }
+  if (Array.isArray(d.limitations) && d.limitations.length) html += `<section class="card"><h2>局限说明</h2><ul class="lim">${d.limitations.map(l=>`<li>${esc(l)}</li>`).join("")}</ul></section>`;
+  html += `<p class="foot">这份评估由 AI 根据自己能看到的使用记录生成，不是标准化心理测评。页面由“AI 能力画像 · 报告查看器 v0.7”生成。</p>`;
+
+  const root = document.getElementById("report");
+  root.innerHTML = html;
+  wireRadars(root);
+}
+
+/* ---------- export ---------- */
+let CURRENT = null;
+function toMarkdown(raw){
+  const d = normalize(raw);
+  const L = [];
+  L.push(`# ${d.title || "AI 能力画像"}`, "");
+  L.push([d.date && `评估日期：${d.date}`, d.tool && `评估工具：${d.tool}`, d.timezone && `时区：${d.timezone}`, isNum(d.longest_usage_months) && `单一工具最长使用（可见记录）：${d.longest_usage_months} 个月`].filter(Boolean).join(" ｜ "), "");
+  L.push("## 总评", ...(Array.isArray(d.summary)?d.summary:[d.summary]).filter(Boolean), "");
+  if (d.influence) L.push(`**影响评价的因素：** ${d.influence}`, "");
+  if (Array.isArray(d.strengths)) { L.push("## 最强的地方"); d.strengths.forEach(s => { const it = d.items[s.no-1]; if (it) L.push(`- **${it.name}（${isNum(it.score)?it.score:"—"}）**：${s.reason||""}`); }); L.push(""); }
+  if (Array.isArray(d.priorities)) { L.push("## 最该补的五项"); d.priorities.forEach((p,i) => { const it = d.items[p.no-1]; if (it) L.push(`${i+1}. **${it.name}（${isNum(it.score)?it.score:"—"}）**：${p.reason||""}`); }); L.push(""); }
+  L.push("## 逐项评分", "", "| 编号 | 领域 | 项目 | 分数 | 支持证据 | 反面 / 边界 | 建议 |", "|---|---|---|---|---|---|---|");
+  const cell = s => String(s||"").replace(/\|/g,"／").replace(/\n/g," ");
+  d.items.forEach(it => L.push(`| ${it.no} | ${it.domain} | ${it.name}${it.weight<1?"（低权重）":""} | ${it.status==="na"?"不适用":(isNum(it.score)?it.score:"证据不足")} | ${cell(it.support)} | ${cell(it.counter)} | ${cell(it.advice)} |`));
+  L.push("");
+  if (Array.isArray(d.limitations)) { L.push("## 局限说明", ...d.limitations.map(x=>`- ${x}`), ""); }
+  L.push("## 数据块", "", "```json", JSON.stringify(raw, null, 1), "```", "");
+  return L.join("\n");
+}
+document.getElementById("exportbtn").addEventListener("click", () => {
+  if (!CURRENT) return;
+  const md = toMarkdown(CURRENT);
+  const box = document.getElementById("exportbox");
+  document.getElementById("exportarea").value = md; box.style.display = "flex";
+  saveFile(md);
+});
+let DL = null;
+try { if (window.claude && typeof window.claude.use === "function") window.claude.use("downloads").then(x => { DL = x; }).catch(() => {}); } catch(e){}
+async function saveFile(md){
+  const m = document.getElementById("copymsg");
+  if (DL){
+    try { await DL.save({filename:"ai-profile.md", data: md}); m.textContent = "已发起下载"; } catch(e){ m.textContent = "下载没有完成，可以点“复制全文”。"; }
+    return;
+  }
+  try { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([md], {type:"text/markdown"})); a.download = "ai-profile.md"; document.body.appendChild(a); a.click(); a.remove(); m.textContent = "如果下载没有开始，请点“复制全文”。"; }
+  catch(e){ m.textContent = "当前环境不支持直接下载，请点“复制全文”。"; }
+}
+document.getElementById("copybtn").addEventListener("click", async () => {
+  const t = document.getElementById("exportarea"); const m = document.getElementById("copymsg");
+  try { await navigator.clipboard.writeText(t.value); m.textContent = "已复制"; } catch(e){ t.select(); m.textContent = "请按 Ctrl/Cmd + C 复制已选中的内容"; }
+});
+document.getElementById("closeexport").addEventListener("click", () => { document.getElementById("exportbox").style.display = "none"; });
+
+/* ---------- loader ---------- */
+const msg = document.getElementById("msg");
+function fail(t){ msg.textContent = t; msg.classList.add("show"); }
+function ok(){ msg.classList.remove("show"); }
+function loadText(text){
+  const d = extractJSON(text);
+  if (!d){ fail("没有在报告里找到数据块。请确认 AI 按评估指令第七步，在报告末尾输出了 ```json 开头的数据块，并且复制完整。"); return; }
+  ok(); render(d); document.getElementById("pastebox").classList.remove("open"); window.scrollTo({top:0});
+}
+document.getElementById("file").addEventListener("change", e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  const r = new FileReader(); r.onload = () => loadText(String(r.result)); r.onerror = () => fail("文件读取失败，请换成粘贴的方式。"); r.readAsText(f, "utf-8"); e.target.value = "";
+});
+document.getElementById("pastebtn").addEventListener("click", () => { document.getElementById("pastebox").classList.toggle("open"); document.getElementById("pastearea").focus(); });
+document.getElementById("renderbtn").addEventListener("click", () => loadText(document.getElementById("pastearea").value));
+document.getElementById("samplebtn").addEventListener("click", () => { ok(); render(SAMPLE, {banner:"这是示例数据，用来展示报告的样子。上传或粘贴你自己的报告，就会替换成你的结果。"}); window.scrollTo({top:0}); });
+
+if (EMBEDDED) render(EMBEDDED);
+else render(SAMPLE, {banner:"这是示例数据，用来展示报告的样子。点右上角“上传报告文件”或“粘贴报告”，换成你自己的结果。"});
+</script>
+</body>
+</html>
