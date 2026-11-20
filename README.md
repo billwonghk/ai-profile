@@ -26,6 +26,12 @@ Works with Claude Code, Codex, Gemini CLI, Cursor, Antigravity and other tools t
 
 If you prefer not to use the command line, download this repository as a ZIP and put the `ai-profile` folder into your tool's skills directory, for example `~/.claude/skills/` for Claude Code or `~/.codex/skills/` for Codex.
 
+### WorkBuddy
+
+WorkBuddy 也支持 skill。下载本仓库的压缩包，把里面的 `ai-profile` 文件夹放进 WorkBuddy 的 skills 目录：Mac 是 `~/.workbuddy/skills/`，Windows 是 `%APPDATA%\WorkBuddy\skills\`。放好后重启 WorkBuddy，在技能列表里能看到 ai-profile 就说明装好了。
+
+WorkBuddy supports skills too. Download this repository as a ZIP and put the `ai-profile` folder into WorkBuddy's skills directory: `~/.workbuddy/skills/` on Mac, `%APPDATA%\WorkBuddy\skills\` on Windows. Restart WorkBuddy; if ai-profile shows up in the skill list, it's installed.
+
 ## 使用 · Usage
 
 在 AI 工具里说一句 / Just tell your AI:
@@ -50,9 +56,9 @@ npx skills update ai-profile
 
 ## 只用网页版 AI · Chat-only AIs
 
-DeepSeek、千问、WorkBuddy 等网页版 AI 一般不能安装 skill。把 [`docs/AI能力画像-评估指令-v0.7.md`](docs/AI能力画像-评估指令-v0.7.md) 整份发给它，按文档开头的说明使用即可。
+DeepSeek、千问等网页版 AI 一般不能安装 skill。把 [`docs/AI能力画像-评估指令-v0.7.md`](docs/AI能力画像-评估指令-v0.7.md) 整份发给它，按文档开头的说明使用即可。
 
-Chat-only AIs such as DeepSeek, Qwen or WorkBuddy usually can't install skills. Send them the whole [`docs/AI能力画像-评估指令-v0.7.md`](docs/AI能力画像-评估指令-v0.7.md) file and follow the instructions at the top of the document.
+Chat-only AIs such as DeepSeek or Qwen usually can't install skills. Send them the whole [`docs/AI能力画像-评估指令-v0.7.md`](docs/AI能力画像-评估指令-v0.7.md) file and follow the instructions at the top of the document.
 
 ## 说明 · Notes
 
