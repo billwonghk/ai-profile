@@ -8,60 +8,111 @@ Let the AI you use most build a 30-item capability profile from your real usage 
 
 ---
 
-## 安装 · Install
+## 使用步骤 · How to use
 
-在电脑终端里运行（需要先装好 Node.js）：
+按你用的 AI 工具，选下面对应的一种方式。
 
-Run this in your terminal (Node.js required):
+Pick the method that matches the AI tool you use.
 
-```
-npx skills add billwonghk/ai-profile
-```
+### 方式一：命令行安装 · Option 1: Install from the command line
 
-支持 Claude Code、Codex、Gemini CLI、Cursor、Antigravity 等支持 Agent Skills 标准的工具。
+适用于 Claude Code、Codex、Gemini CLI、Cursor、Antigravity 等支持 Agent Skills 标准的工具。
 
-Works with Claude Code, Codex, Gemini CLI, Cursor, Antigravity and other tools that support the Agent Skills standard.
+For Claude Code, Codex, Gemini CLI, Cursor, Antigravity and other tools that support the Agent Skills standard.
 
-不熟悉命令行的话，也可以下载本仓库的压缩包，把里面的 `ai-profile` 文件夹放进对应工具的 skills 目录，例如 Claude Code 是 `~/.claude/skills/`，Codex 是 `~/.codex/skills/`。
+1. 确认电脑上装了 Node.js。
+   Make sure Node.js is installed.
+2. 在终端运行：
+   Run in your terminal:
+   ```
+   npx skills add billwonghk/ai-profile
+   ```
+3. 打开你的 AI 工具，说一句：“给我做一份 AI 能力画像”。
+   Open your AI tool and say: "Build my AI profile".
+4. 等它跑完，打开生成的 `ai-profile.html` 查看报告。
+   When it finishes, open the generated `ai-profile.html` to view the report.
 
-If you prefer not to use the command line, download this repository as a ZIP and put the `ai-profile` folder into your tool's skills directory, for example `~/.claude/skills/` for Claude Code or `~/.codex/skills/` for Codex.
+以后更新：`npx skills update ai-profile`
 
-### WorkBuddy
+To update later: `npx skills update ai-profile`
 
-WorkBuddy 也支持 skill。下载本仓库的压缩包，把里面的 `ai-profile` 文件夹放进 WorkBuddy 的 skills 目录：Mac 是 `~/.workbuddy/skills/`，Windows 是 `%APPDATA%\WorkBuddy\skills\`。放好后重启 WorkBuddy，在技能列表里能看到 ai-profile 就说明装好了。
+### 方式二：手动放入 skills 文件夹 · Option 2: Copy into the skills folder
 
-WorkBuddy supports skills too. Download this repository as a ZIP and put the `ai-profile` folder into WorkBuddy's skills directory: `~/.workbuddy/skills/` on Mac, `%APPDATA%\WorkBuddy\skills\` on Windows. Restart WorkBuddy; if ai-profile shows up in the skill list, it's installed.
+适用于 WorkBuddy，以及不想用命令行的情况。
 
-## 使用 · Usage
+For WorkBuddy, or if you'd rather not use the command line.
 
-在 AI 工具里说一句 / Just tell your AI:
+1. 下载 [`dist/ai-profile.zip`](dist/ai-profile.zip) 并解压，得到 `ai-profile` 文件夹。
+   Download [`dist/ai-profile.zip`](dist/ai-profile.zip) and unzip it to get the `ai-profile` folder.
+2. 把整个 `ai-profile` 文件夹放进你的工具的 skills 目录：
+   Put the whole `ai-profile` folder into your tool's skills directory:
 
-> 给我做一份 AI 能力画像
->
-> Build my AI profile
+   | 工具 · Tool | 目录 · Directory |
+   |---|---|
+   | WorkBuddy（Mac） | `~/.workbuddy/skills/` |
+   | WorkBuddy（Windows） | `%APPDATA%\WorkBuddy\skills\` |
+   | Claude Code | `~/.claude/skills/` |
+   | Codex | `~/.codex/skills/` |
+   | Gemini CLI | `~/.gemini/skills/` |
 
-AI 会读取它能看到的记录（只读、只统计，不改任何文件），生成 `ai-profile.html` 报告网页，双击就能在浏览器里打开。网页右上角可以导出 Markdown 原报告。
+3. 重启工具，在技能列表里能看到 ai-profile 就说明装好了。
+   Restart the tool. If ai-profile appears in the skill list, it's installed.
+4. 说一句：“给我做一份 AI 能力画像”，然后打开生成的 `ai-profile.html`。
+   Say "Build my AI profile", then open the generated `ai-profile.html`.
 
-The AI reads the records it can access (read-only, statistics only, no files are changed) and generates `ai-profile.html`. Double-click to open it in your browser. Use the button at the top right to export the original Markdown report.
+### 方式三：Claude 网页版和 App · Option 3: Claude on the web and in the apps
 
-报告会用你平时和 AI 交流的语言来写。报告网页的界面目前是中文。
+1. 在 Settings → Capabilities 里，确认已经打开“代码执行和文件创建”（新版设置里叫 Create and edit files）。
+   In Settings → Capabilities, make sure "Code execution and file creation" (called "Create and edit files" in the newer layout) is on.
+2. 下载 [`dist/ai-profile.zip`](dist/ai-profile.zip)，不用解压。
+   Download [`dist/ai-profile.zip`](dist/ai-profile.zip). Don't unzip it.
+3. 进入 Customize → Skills，点“+”，选 Create skill → Upload a skill，上传这个压缩包。
+   Go to Customize → Skills, click "+", choose Create skill → Upload a skill, and upload the ZIP.
+4. 新开一个对话，说：“给我做一份 AI 能力画像”。
+   Start a new chat and say: "Build my AI profile".
 
-The report is written in the language you normally use with your AI. The report page interface is currently in Chinese.
+### 方式四：网页版 AI · Option 4: Chat-only AIs
 
-## 更新 · Update
+适用于 DeepSeek、千问、ChatGPT 网页版等不能安装 skill 的 AI。
 
-```
-npx skills update ai-profile
-```
+For AIs that can't install skills, such as DeepSeek, Qwen or ChatGPT on the web.
 
-## 只用网页版 AI · Chat-only AIs
+1. 下载 [`docs/AI能力画像-评估指令-v0.7.md`](docs/AI能力画像-评估指令-v0.7.md)。
+   Download [`docs/AI能力画像-评估指令-v0.7.md`](docs/AI能力画像-评估指令-v0.7.md).
+2. 把这个文件作为附件发给你的 AI，同时发送文档开头“给用户的说明”里的那段启动语。
+   Send the file to your AI as an attachment, together with the start prompt in the "给用户的说明" section at the top of the document.
+3. AI 会生成报告网页；生成不了网页的，会输出 Markdown 报告。
+   The AI generates a report page, or a Markdown report if it can't make web pages.
+4. 拿到 Markdown 报告时：下载本仓库的 [`ai-profile/assets/report.html`](ai-profile/assets/report.html)，用浏览器打开，点右上角“粘贴报告”，就能看到图文版。
+   If you get a Markdown report: download [`ai-profile/assets/report.html`](ai-profile/assets/report.html) from this repository, open it in a browser, click "粘贴报告" (Paste report) at the top right, and paste it in.
 
-DeepSeek、千问等网页版 AI 一般不能安装 skill。把 [`docs/AI能力画像-评估指令-v0.7.md`](docs/AI能力画像-评估指令-v0.7.md) 整份发给它，按文档开头的说明使用即可。
+### 用了好几个 AI？· Using several AIs?
 
-Chat-only AIs such as DeepSeek or Qwen usually can't install skills. Send them the whole [`docs/AI能力画像-评估指令-v0.7.md`](docs/AI能力画像-评估指令-v0.7.md) file and follow the instructions at the top of the document.
+每个 AI 能看到的记录不一样，可以在常用的几个 AI 里各跑一次，再把几份报告一起发给其中一个 AI，说：“按评估规则第九步，合并这几份报告”。
+
+Each AI sees different records. Run the profile in each AI you use often, then send all the reports to one of them and say: "Merge these reports following step 9 of the rules."
+
+---
+
+## 报告里有什么 · What's in the report
+
+- 加权平均分、三到五句总评、最强的地方、最该补的五项
+  Weighted average score, a short summary, top strengths, and the five things to improve first
+- 六个领域的雷达图：认知与判断、学习与执行、AI 驾驭力、业务与价值、沟通与协作、自我管理
+  Radar charts for six domains: cognition, learning and execution, AI mastery, business value, communication, and self-management
+- 30 项逐项评分，每项附证据、反面证据和改进建议
+  Scores for all 30 items, each with evidence, counter-evidence and an improvement tip
+- 使用数据：对话数、活跃天数、单一工具最长使用时长等
+  Usage data: conversation counts, active days, longest use of a single tool, and more
+
+报告用你平时和 AI 交流的语言来写。报告网页的界面目前是中文。网页右上角可以导出 Markdown 原报告。
+
+The report is written in the language you normally use with your AI. The report page interface is currently in Chinese. Use the button at the top right of the page to export the Markdown report.
 
 ## 说明 · Notes
 
+- AI 读取本机记录时只读、只统计，不修改任何文件。
+  When reading local records, the AI only reads and counts. It never changes any file.
 - 这份评估由 AI 根据自己能看到的使用记录生成，不是标准化心理测评。
   The assessment is generated by an AI from the usage records it can see. It is not a standardized psychological test.
 - 只评能力，不评品行；不输出项目名、目录名、人名和个人敏感信息。
